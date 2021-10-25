@@ -1,8 +1,8 @@
 ## tree
 
-A tree command with only the options and parameters and defaults that I like.
+An opinionated tree command with only the options, parameters, and defaults that I like.
 
-This is a port of [my C version](https://github.com/ltriant/tree) to [Nim](https://nim-lang.org/), as a way to try out the Nim language.
+I originally wrote this because I needed a tree command, and had no internet connection at my home yet to install an existing one. The first version was written in C, but that's now deprecated for this version.
 
 ## Build & Install
 
