@@ -84,13 +84,18 @@ proc crawlAndPrint(
     else:
       prefix & IndentMiddleItem
 
+    let absolutePath = if fullPath:
+      fsPath
+    else:
+      path & "/" & fsPath
+
     case kind
 
     of PathComponent.pcFile:
       if not directoriesOnly:
         rv.numFiles += 1
 
-        let fileInfo = os.getFileInfo(path & "/" & fsPath)
+        let fileInfo = os.getFileInfo(absolutePath)
         if FilePermission.fpUserExec in fileInfo.permissions or
           FilePermission.fpGroupExec in fileInfo.permissions or
           FilePermission.fpOthersExec in fileInfo.permissions:
@@ -110,7 +115,7 @@ proc crawlAndPrint(
         prefix & LineVertical & "   "
 
       let dirResult = crawlAndPrint(
-        path & "/" & fsPath,
+        absolutePath,
         maxDepth,
         level + 1,
         fullPath,
@@ -123,8 +128,7 @@ proc crawlAndPrint(
 
     of PathComponent.pcLinkToFile:
       if not directoriesOnly:
-        let fullPath = path & "/" & fsPath
-        let linkPath = os.expandSymlink(fullPath)
+        let linkPath = os.expandSymlink(absolutePath)
         rv.numFiles += 1
         styledEcho indent, " ", styleBright, fgRed, fsPath, resetStyle, fgCyan, " -> ", linkPath
 
