@@ -17,7 +17,7 @@
 
 import std/[options, os, strutils, terminal]
 from std/algorithm import sort, reverse
-from std/sequtils import toSeq
+from std/sequtils import toSeq, keepIf
 
 import docopt
 
@@ -65,6 +65,10 @@ proc crawlAndPrint(
     return rv
 
   var entities = os.walkDir(path, relative = not fullPath).toSeq
+
+  if directoriesOnly:
+    entities.keepIf do (x: tuple[kind: PathComponent, path: string]) -> bool:
+      x.kind == PathComponent.pcDir
 
   entities.sort do (x, y: tuple[kind: PathComponent, path: string]) -> int:
     # Always sort directories to the top
