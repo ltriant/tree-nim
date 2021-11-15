@@ -49,6 +49,42 @@ type
     numFiles: int
     numFolders: int
 
+proc echoItemNoColor(kind: PathComponent, prefix: string, absPath: string, relPath: string) =
+  case kind
+
+  of PathComponent.pcFile, PathComponent.pcDir, PathComponent.pcLinkToDir:
+    echo prefix, " ", relPath
+
+  of PathComponent.pcLinkToFile:
+    let linkPath = os.expandSymlink(absPath)
+    echo prefix, " ", relPath, " -> ", linkPath
+
+proc echoItemColor(kind: PathComponent, prefix: string, absPath: string, relPath: string) =
+  case kind
+
+  of PathComponent.pcFile:
+    let fileInfo = os.getFileInfo(absPath)
+    if FilePermission.fpUserExec in fileInfo.permissions or
+      FilePermission.fpGroupExec in fileInfo.permissions or
+      FilePermission.fpOthersExec in fileInfo.permissions:
+
+      styledEcho prefix, " ", styleBright, fgGreen, relPath
+    else:
+      echo prefix, " ", relPath
+
+  of PathComponent.pcDir, PathComponent.pcLinkToDir:
+    styledEcho prefix, " ", styleBright, fgBlue, relPath
+
+  of PathComponent.pcLinkToFile:
+    let linkPath = os.expandSymlink(absPath)
+    styledEcho prefix, " ", styleBright, fgRed, relPath, resetStyle, fgCyan, " -> ", linkPath
+
+proc echoItem(kind: PathComponent, prefix: string, absPath: string, relPath: string) =
+  if stdout.isatty:
+    echoItemColor kind, prefix, absPath, relPath
+  else:
+    echoItemNoColor kind, prefix, absPath, relPath
+
 proc crawlAndPrint(
     path: string,
     maxDepth: Option[int] = none(int),
@@ -98,20 +134,12 @@ proc crawlAndPrint(
     of PathComponent.pcFile:
       if not directoriesOnly:
         rv.numFiles += 1
-
-        let fileInfo = os.getFileInfo(absolutePath)
-        if FilePermission.fpUserExec in fileInfo.permissions or
-          FilePermission.fpGroupExec in fileInfo.permissions or
-          FilePermission.fpOthersExec in fileInfo.permissions:
-
-          styledEcho indent, " ", styleBright, fgGreen, fsPath
-        else:
-          echo indent, " ", fsPath
+        echoItem kind, indent, absolutePath, fsPath
 
     of PathComponent.pcDir, PathComponent.pcLinkToDir:
       rv.numFolders += 1
 
-      styledEcho indent, " ", styleBright, fgBlue, fsPath
+      echoItem kind, indent, absolutePath, fsPath
 
       let newPrefix = if i == high(entities):
         prefix & "    "
@@ -132,9 +160,8 @@ proc crawlAndPrint(
 
     of PathComponent.pcLinkToFile:
       if not directoriesOnly:
-        let linkPath = os.expandSymlink(absolutePath)
         rv.numFiles += 1
-        styledEcho indent, " ", styleBright, fgRed, fsPath, resetStyle, fgCyan, " -> ", linkPath
+        echoItem kind, indent, absolutePath, fsPath
 
   return rv
 
