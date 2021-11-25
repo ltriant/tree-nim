@@ -52,10 +52,10 @@ type
 proc echoItemNoColor(kind: PathComponent, prefix: string, absPath: string, relPath: string) =
   case kind
 
-  of PathComponent.pcFile, PathComponent.pcDir, PathComponent.pcLinkToDir:
+  of PathComponent.pcFile, PathComponent.pcDir:
     echo prefix, " ", relPath
 
-  of PathComponent.pcLinkToFile:
+  of PathComponent.pcLinkToFile, PathComponent.pcLinkToDir:
     let linkPath = os.expandSymlink(absPath)
     echo prefix, " ", relPath, " -> ", linkPath
 
@@ -72,10 +72,10 @@ proc echoItemColor(kind: PathComponent, prefix: string, absPath: string, relPath
     else:
       echo prefix, " ", relPath
 
-  of PathComponent.pcDir, PathComponent.pcLinkToDir:
+  of PathComponent.pcDir:
     styledEcho prefix, " ", styleBright, fgBlue, relPath
 
-  of PathComponent.pcLinkToFile:
+  of PathComponent.pcLinkToFile, PathComponent.pcLinkToDir:
     let linkPath = os.expandSymlink(absPath)
     styledEcho prefix, " ", styleBright, fgRed, relPath, resetStyle, fgCyan, " -> ", linkPath
 
