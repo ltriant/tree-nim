@@ -21,13 +21,15 @@ from std/sequtils import toSeq, keepIf
 
 import docopt
 
-const LineHorizontal: string = "\u2500"# ─
-const LineVertical: string = "\u2502"  # │
-const LineMiddle: string = "\u251c"    # ├
-const LineLast: string = "\u2514"      # └
+const
+  LineHorizontal: string = "\u2500" # ─
+  LineVertical: string   = "\u2502" # │
+  LineMiddle: string     = "\u251c" # ├
+  LineLast: string       = "\u2514" # └
 
-const IndentMiddleItem: string = LineMiddle & LineHorizontal & LineHorizontal
-const IndentLastItem: string = LineLast & LineHorizontal & LineHorizontal
+const
+  IndentMiddleItem: string = LineMiddle & LineHorizontal & LineHorizontal
+  IndentLastItem: string   = LineLast   & LineHorizontal & LineHorizontal
 
 const Doc: string = """
 tree
