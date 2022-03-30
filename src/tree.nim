@@ -15,9 +15,9 @@
 #    /_/o/_/_/@/_/_/o/_/0/_\
 #             [___]
 
-import std/[options, os, strutils, terminal]
-from std/algorithm import sort, reverse
-from std/sequtils import toSeq, keepIf
+import options, os, strutils, sugar, terminal
+from algorithm import sort, reverse
+from sequtils import toSeq, keepIf
 
 import docopt
 
@@ -35,7 +35,7 @@ const Doc: string = """
 tree
 
 Usage:
-  tree [-drsfh] [-L level] [<path>]
+  tree [-drsfhD] [-L level] [<path>]
 
 Options:
   -d        Show directories only
@@ -43,6 +43,7 @@ Options:
   -r        Sort in reverse alphabetic order
   -s        Print a summary of directories and files at the end
   -f        Print the full path of each file
+  -D        Dumb mode (recurses into every directory and lists every file)
   -h        This help message
 """
 
@@ -50,6 +51,21 @@ type
   CrawlResult = object
     numFiles: int
     numFolders: int
+
+  CrawlMode = enum
+    Smart
+    Dumb
+
+const SkippableDirectories = [
+    ".git",            # git
+    "zig-cache",       # Zig
+    "node_modules",    # Node
+    "target",          # Nim, Rust, Clojure, etc
+    ".terraform",      # Terraform
+  ]
+
+func skippable(fsPath: string): bool =
+  fsPath in SkippableDirectories
 
 proc echoItemNoColor(kind: PathComponent, prefix: string, absPath: string, relPath: string) =
   case kind
@@ -94,7 +110,8 @@ proc crawlAndPrint(
     fullPath: bool = false,
     directoriesOnly: bool = false,
     reverseSort: bool = false,
-    prefix: string = ""
+    prefix: string = "",
+    mode: CrawlMode = Smart
   ): CrawlResult =
 
   var rv = CrawlResult(numFiles: 0, numFolders: 0)
@@ -105,23 +122,22 @@ proc crawlAndPrint(
   var entities = os.walkDir(path, relative = not fullPath).toSeq
 
   if directoriesOnly:
-    entities.keepIf do (x: tuple[kind: PathComponent, path: string]) -> bool:
-      x.kind == PathComponent.pcDir
+    entities.keepIf x => x.kind == PathComponent.pcDir
 
   entities.sort do (x, y: tuple[kind: PathComponent, path: string]) -> int:
     # Always sort directories to the top
     if x.kind == PathComponent.pcDir and y.kind != PathComponent.pcDir:
-      return -1
-    if x.kind != PathComponent.pcDir and y.kind == PathComponent.pcDir:
-      return 1
+      -1
+    elif x.kind != PathComponent.pcDir and y.kind == PathComponent.pcDir:
+      1
     else:
-      return cmp(x.path, y.path)
+      cmp(x.path, y.path)
 
   if reverseSort:
-    entities.reverse()
+    entities.reverse
 
   for i, (kind, fsPath) in entities:
-    let indent = if i == high(entities):
+    let indent = if i == entities.high:
       prefix & IndentLastItem
     else:
       prefix & IndentMiddleItem
@@ -143,22 +159,23 @@ proc crawlAndPrint(
 
       echoItem kind, indent, absolutePath, fsPath
 
-      let newPrefix = if i == high(entities):
+      let newPrefix = if i == entities.high:
         prefix & "    "
       else:
         prefix & LineVertical & "   "
 
-      let dirResult = crawlAndPrint(
-        absolutePath,
-        maxDepth,
-        level + 1,
-        fullPath,
-        directoriesOnly,
-        reverseSort,
-        newPrefix
-      )
-      rv.numFiles += dirResult.numFiles
-      rv.numFolders += dirResult.numFolders
+      if mode == Smart and not skippable(fsPath):
+        let dirResult = crawlAndPrint(
+          absolutePath,
+          maxDepth,
+          level + 1,
+          fullPath,
+          directoriesOnly,
+          reverseSort,
+          newPrefix
+        )
+        rv.numFiles += dirResult.numFiles
+        rv.numFolders += dirResult.numFolders
 
     of PathComponent.pcLinkToFile:
       if not directoriesOnly:
@@ -188,13 +205,19 @@ when isMainModule:
   else:
     os.getCurrentDir()
 
+  let mode = if args["-D"]:
+    Dumb
+  else:
+    Smart
+
   echo path
   let summary = crawlAndPrint(
     path,
     maxDepth,
     fullPath = args["-f"],
     directoriesOnly = args["-d"],
-    reverseSort = args["-r"]
+    reverseSort = args["-r"],
+    mode = mode
   )
 
   if args["-s"]:
