@@ -164,7 +164,7 @@ proc crawlAndPrint(
       else:
         prefix & LineVertical & "   "
 
-      if mode == Smart and not skippable(fsPath):
+      if mode == Dumb or (mode == Smart and not skippable(fsPath)):
         let dirResult = crawlAndPrint(
           absolutePath,
           maxDepth,
