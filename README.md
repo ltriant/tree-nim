@@ -2,7 +2,9 @@
 
 An opinionated tree command with only the options, parameters, and defaults that I like.
 
-I originally wrote this because I needed a tree command, and had no internet connection at my home yet to install an existing one. The first version was written in C, but that's now deprecated for this version.
+## But why?
+
+I originally wrote this because I needed/wanted a tree command, but I had no internet connection at my new home yet to install something like GNU tree, so I wrote my own for funsies.
 
 ## Build & Install
 
