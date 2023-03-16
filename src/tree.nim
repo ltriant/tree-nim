@@ -15,9 +15,9 @@
 #    /_/o/_/_/@/_/_/o/_/0/_\
 #             [___]
 
-import options, os, strutils, sugar, terminal
-from algorithm import sort, reverse
-from sequtils import toSeq, keepIf
+import std/[options, os, strutils, sugar, terminal]
+from std/algorithm import sort, reverse
+from std/sequtils import toSeq, keepIf
 
 import docopt
 
@@ -53,8 +53,8 @@ type
     numFolders: int
 
   CrawlMode = enum
-    Smart
-    Dumb
+    cmSmart
+    cmDumb
 
 const SkippableDirectories = [
     ".git",            # git
@@ -105,18 +105,18 @@ proc echoItem(kind: PathComponent, prefix: string, absPath: string, relPath: str
 
 proc crawlAndPrint(
     path: string,
-    maxDepth: Option[int] = none(int),
-    level: int = 0,
+    maxDepth: Option[uint] = none(uint),
+    level: uint = 0,
     fullPath: bool = false,
     directoriesOnly: bool = false,
     reverseSort: bool = false,
     prefix: string = "",
-    mode: CrawlMode = Smart
+    mode: CrawlMode = cmSmart
   ): CrawlResult =
 
   var rv = CrawlResult(numFiles: 0, numFolders: 0)
 
-  if maxDepth.isSome and level == maxDepth.get:
+  if maxDepth.map(x => x == level).get(false):
     return rv
 
   var entities = os.walkDir(path, relative = not fullPath).toSeq
@@ -124,7 +124,7 @@ proc crawlAndPrint(
   if directoriesOnly:
     entities.keepIf x => x.kind == PathComponent.pcDir
 
-  entities.sort do (x, y: tuple[kind: PathComponent, path: string]) -> int:
+  entities.sort proc (x, y: tuple[kind: PathComponent, path: string]): int =
     # Always sort directories to the top
     if x.kind == PathComponent.pcDir and y.kind != PathComponent.pcDir:
       -1
@@ -164,7 +164,7 @@ proc crawlAndPrint(
       else:
         prefix & LineVertical & "   "
 
-      if mode == Dumb or (mode == Smart and not skippable(fsPath)):
+      if mode == cmDumb or (mode == cmSmart and not skippable(fsPath)):
         let dirResult = crawlAndPrint(
           absolutePath,
           maxDepth,
@@ -196,9 +196,9 @@ when isMainModule:
   let args = docopt(Doc)
 
   let maxDepth = if args["-L"]:
-    some(parseInt($args["-L"]))
+    some(parseUint($args["-L"]))
   else:
-    none(int)
+    none(uint)
 
   let path = if args["<path>"]:
     $args["<path>"]
@@ -206,9 +206,9 @@ when isMainModule:
     os.getCurrentDir()
 
   let mode = if args["-D"]:
-    Dumb
+    cmDumb
   else:
-    Smart
+    cmSmart
 
   echo path
   let summary = crawlAndPrint(
