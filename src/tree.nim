@@ -17,7 +17,7 @@
 
 import std/[options, os, strutils, sugar, terminal]
 from std/algorithm import sort, reverse
-from std/sequtils import toSeq, keepIf
+from std/sequtils import any, toSeq, keepIf
 
 import docopt
 
@@ -49,8 +49,8 @@ Options:
 
 type
   CrawlResult = object
-    numFiles: int
-    numFolders: int
+    numFiles: uint
+    numFolders: uint
 
   CrawlMode = enum
     cmSmart
@@ -67,6 +67,7 @@ const SkippableDirectories = [
 func skippable(fsPath: string): bool =
   fsPath in SkippableDirectories
 
+
 proc echoItemNoColor(kind: PathComponent, prefix: string, absPath: string, relPath: string) =
   case kind
 
@@ -77,15 +78,13 @@ proc echoItemNoColor(kind: PathComponent, prefix: string, absPath: string, relPa
     let linkPath = os.expandSymlink(absPath)
     echo prefix, " ", relPath, " -> ", linkPath
 
+
 proc echoItemColor(kind: PathComponent, prefix: string, absPath: string, relPath: string) =
   case kind
 
   of pcFile:
     let fileInfo = os.getFileInfo(absPath)
-    if FilePermission.fpUserExec in fileInfo.permissions or
-      FilePermission.fpGroupExec in fileInfo.permissions or
-      FilePermission.fpOthersExec in fileInfo.permissions:
-
+    if fileInfo.permissions.toSeq.any(p => p in [fpUserExec, fpGroupExec, fpOthersExec]):
       styledEcho prefix, " ", styleBright, fgGreen, relPath
     else:
       echo prefix, " ", relPath
@@ -97,11 +96,13 @@ proc echoItemColor(kind: PathComponent, prefix: string, absPath: string, relPath
     let linkPath = os.expandSymlink(absPath)
     styledEcho prefix, " ", styleBright, fgRed, relPath, resetStyle, fgCyan, " -> ", linkPath
 
+
 proc echoItem(kind: PathComponent, prefix: string, absPath: string, relPath: string) =
   if stdout.isatty:
     echoItemColor kind, prefix, absPath, relPath
   else:
     echoItemNoColor kind, prefix, absPath, relPath
+
 
 proc crawlAndPrint(
     path: string,
@@ -179,6 +180,7 @@ proc crawlAndPrint(
 
   return rv
 
+
 proc printSummary(summary: CrawlResult) =
   echo "\n$1 $2, $3 $4" % [
     $summary.numFolders,
@@ -186,6 +188,7 @@ proc printSummary(summary: CrawlResult) =
     $summary.numFiles,
     if summary.numFiles == 1: "file" else: "files"
   ]
+
 
 when isMainModule:
   let args = docopt(Doc)
