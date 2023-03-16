@@ -70,7 +70,6 @@ func skippable(fsPath: string): bool =
 
 proc echoItemNoColor(kind: PathComponent, prefix: string, absPath: string, relPath: string) =
   case kind
-
   of pcFile, pcDir:
     echo prefix, " ", relPath
 
@@ -81,7 +80,6 @@ proc echoItemNoColor(kind: PathComponent, prefix: string, absPath: string, relPa
 
 proc echoItemColor(kind: PathComponent, prefix: string, absPath: string, relPath: string) =
   case kind
-
   of pcFile:
     let fileInfo = os.getFileInfo(absPath)
     if fileInfo.permissions.toSeq.any(p => p in [fpUserExec, fpGroupExec, fpOthersExec]):
@@ -149,7 +147,6 @@ proc crawlAndPrint(
       path & "/" & fsPath
 
     case kind
-
     of pcFile, pcLinkToFile:
       if not directoriesOnly:
         rv.numFiles += 1
