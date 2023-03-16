@@ -149,7 +149,7 @@ proc crawlAndPrint(
 
     case kind
 
-    of PathComponent.pcFile:
+    of PathComponent.pcFile, PathComponent.pcLinkToFile:
       if not directoriesOnly:
         rv.numFiles += 1
         echoItem kind, indent, absolutePath, fsPath
@@ -176,11 +176,6 @@ proc crawlAndPrint(
         )
         rv.numFiles += dirResult.numFiles
         rv.numFolders += dirResult.numFolders
-
-    of PathComponent.pcLinkToFile:
-      if not directoriesOnly:
-        rv.numFiles += 1
-        echoItem kind, indent, absolutePath, fsPath
 
   return rv
 
