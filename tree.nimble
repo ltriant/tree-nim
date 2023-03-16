@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.2.0"
+version       = "0.2.1"
 author        = "Luke Triantafyllidis"
 description   = "A tree that's just for me"
 license       = "MIT"
