@@ -70,17 +70,17 @@ func skippable(fsPath: string): bool =
 proc echoItemNoColor(kind: PathComponent, prefix: string, absPath: string, relPath: string) =
   case kind
 
-  of PathComponent.pcFile, PathComponent.pcDir:
+  of pcFile, pcDir:
     echo prefix, " ", relPath
 
-  of PathComponent.pcLinkToFile, PathComponent.pcLinkToDir:
+  of pcLinkToFile, pcLinkToDir:
     let linkPath = os.expandSymlink(absPath)
     echo prefix, " ", relPath, " -> ", linkPath
 
 proc echoItemColor(kind: PathComponent, prefix: string, absPath: string, relPath: string) =
   case kind
 
-  of PathComponent.pcFile:
+  of pcFile:
     let fileInfo = os.getFileInfo(absPath)
     if FilePermission.fpUserExec in fileInfo.permissions or
       FilePermission.fpGroupExec in fileInfo.permissions or
@@ -90,10 +90,10 @@ proc echoItemColor(kind: PathComponent, prefix: string, absPath: string, relPath
     else:
       echo prefix, " ", relPath
 
-  of PathComponent.pcDir:
+  of pcDir:
     styledEcho prefix, " ", styleBright, fgBlue, relPath
 
-  of PathComponent.pcLinkToFile, PathComponent.pcLinkToDir:
+  of pcLinkToFile, pcLinkToDir:
     let linkPath = os.expandSymlink(absPath)
     styledEcho prefix, " ", styleBright, fgRed, relPath, resetStyle, fgCyan, " -> ", linkPath
 
@@ -122,13 +122,13 @@ proc crawlAndPrint(
   var entities = os.walkDir(path, relative = not fullPath).toSeq
 
   if directoriesOnly:
-    entities.keepIf x => x.kind == PathComponent.pcDir
+    entities.keepIf x => x.kind == pcDir
 
   entities.sort proc (x, y: tuple[kind: PathComponent, path: string]): int =
     # Always sort directories to the top
-    if x.kind == PathComponent.pcDir and y.kind != PathComponent.pcDir:
+    if x.kind == pcDir and y.kind != pcDir:
       -1
-    elif x.kind != PathComponent.pcDir and y.kind == PathComponent.pcDir:
+    elif x.kind != pcDir and y.kind == pcDir:
       1
     else:
       cmp(x.path, y.path)
@@ -149,12 +149,12 @@ proc crawlAndPrint(
 
     case kind
 
-    of PathComponent.pcFile, PathComponent.pcLinkToFile:
+    of pcFile, pcLinkToFile:
       if not directoriesOnly:
         rv.numFiles += 1
         echoItem kind, indent, absolutePath, fsPath
 
-    of PathComponent.pcDir, PathComponent.pcLinkToDir:
+    of pcDir, pcLinkToDir:
       rv.numFolders += 1
 
       echoItem kind, indent, absolutePath, fsPath
