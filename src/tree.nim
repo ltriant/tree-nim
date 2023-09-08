@@ -15,9 +15,14 @@
 #    /_/o/_/_/@/_/_/o/_/0/_\
 #             [___]
 
-import std/[options, os, strutils, sugar, terminal]
-from std/algorithm import sort, reverse
-from std/sequtils import any, toSeq, keepIf
+import std/
+  algorithm,
+  options,
+  os,
+  sequtils,
+  strutils,
+  sugar,
+  terminal
 
 import docopt
 
