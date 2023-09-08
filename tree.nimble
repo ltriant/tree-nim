@@ -11,4 +11,5 @@ bin           = @["tree"]
 # Dependencies
 
 requires "nim >= 1.6.0"
-requires "docopt"
+#requires "docopt"
+requires "https://github.com/izumiya-keisuke/docopt.nim"
